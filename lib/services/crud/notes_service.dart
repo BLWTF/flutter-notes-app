@@ -34,11 +34,13 @@ class NotesService {
 
   List<DatabaseNote> _notes = [];
 
+  // START: NotesService Singleton
   static final NotesService _shared = NotesService._sharedInstance();
 
   NotesService._sharedInstance();
 
   factory NotesService() => _shared;
+  // END: NotesService Singleton
 
   final _notesStreamController =
       StreamController<List<DatabaseNote>>.broadcast();
