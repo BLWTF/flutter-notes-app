@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart'
     show getApplicationDocumentsDirectory, MissingPlatformDirectoryException;
 import 'package:path/path.dart' show join;
 
+@immutable
 class DatabaseUser {
   final int id;
   final String email;
@@ -36,14 +37,16 @@ class NotesService {
 
   // START: NotesService Singleton
   static final NotesService _shared = NotesService._sharedInstance();
-
-  NotesService._sharedInstance();
-
+  NotesService._sharedInstance() {
+    _notesStreamController =
+        StreamController<List<DatabaseNote>>.broadcast(onListen: () {
+      _notesStreamController.sink.add(_notes);
+    });
+  }
   factory NotesService() => _shared;
   // END: NotesService Singleton
 
-  final _notesStreamController =
-      StreamController<List<DatabaseNote>>.broadcast();
+  late final StreamController<List<DatabaseNote>> _notesStreamController;
 
   Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
 
@@ -99,8 +102,12 @@ class NotesService {
   Future<DatabaseNote> getNote({required int id}) async {
     await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
-    final notes =
-        await db.query(notesTable, limit: 1, where: 'id = ?', whereArgs: [id]);
+    final notes = await db.query(
+      notesTable,
+      limit: 1,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
 
     if (notes.isEmpty) {
       throw CouldNotFindNote();
@@ -268,7 +275,6 @@ class NotesService {
   }
 }
 
-@immutable
 class DatabaseNote {
   final int id;
   final int userId;
